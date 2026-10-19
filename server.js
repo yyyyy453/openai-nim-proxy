@@ -253,6 +253,7 @@ app.post('/v1/chat/completions', async (req, res) => {
     res.end();
   }
   }
+  });
 
 // Catch-all for unsupported endpoints
 app.all('*', (req, res) => {
