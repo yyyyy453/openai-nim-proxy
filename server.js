@@ -27,7 +27,7 @@ const MODEL_MAPPING = {
   'gpt-4-turbo': 'moonshotai/kimi-k2-instruct-0905',
   'gpt-4o': 'deepseek-ai/deepseek-v3.1',
   'claude-3-opus': 'openai/gpt-oss-120b',
-  'claude-3-sonnet': 'deepseek-ai/deepseek-v4.1-flash',
+  'claude-3-sonnet': 'meta/llama-3.3-70b-instruct',
   'gemini-pro': 'qwen/qwen3-next-80b-a3b-thinking' 
 };
 
@@ -102,6 +102,8 @@ app.post('/v1/chat/completions', async (req, res) => {
     };
     
     // Make request to NVIDIA NIM API
+    console.log('Enviando para NVIDIA:', nimModel, 'stream:', stream);
+    
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
         'Authorization': `Bearer ${NIM_API_KEY}`,
@@ -109,6 +111,8 @@ app.post('/v1/chat/completions', async (req, res) => {
       },
       responseType: stream ? 'stream' : 'json'
     });
+
+    console.log('NVIDIA respondeu, status:', response.status);
     
     if (stream) {
       // Handle streaming response with reasoning
