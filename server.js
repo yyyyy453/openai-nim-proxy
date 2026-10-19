@@ -119,11 +119,13 @@ app.post('/v1/chat/completions', async (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
       
       let buffer = '';
       let reasoningStarted = false;
       
       response.data.on('data', (chunk) => {
+        console.log('CHUNK:', chunk.toString().slice(0, 300));
         buffer += chunk.toString();
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -131,14 +133,14 @@ app.post('/v1/chat/completions', async (req, res) => {
         lines.forEach(line => {
           if (line.startsWith('data: ')) {
             if (line.includes('[DONE]')) {
-              res.write(line + '\n');
+              res.write(line + '\n\n');
               return;
             }
             
             try {
               const data = JSON.parse(line.slice(6));
               if (data.choices?.[0]?.delta) {
-                const reasoning = data.choices[0].delta.reasoning_content;
+                const reasoning = data.choices[0].delta.reasoning_content ?? data.choices[0].delta.reasoning;
                 const content = data.choices[0].delta.content;
                 
                 if (SHOW_REASONING) {
@@ -179,7 +181,10 @@ app.post('/v1/chat/completions', async (req, res) => {
         });
       });
       
-      response.data.on('end', () => res.end());
+        response.data.on('end', () => {
+        console.log('Stream da NVIDIA terminou');
+        res.end();
+      });
       response.data.on('error', (err) => {
         console.error('Stream error:', err);
         res.end();
