@@ -27,7 +27,7 @@ const MODEL_MAPPING = {
   'gpt-4-turbo': 'moonshotai/kimi-k2-instruct-0905',
   'gpt-4o': 'deepseek-ai/deepseek-v3.1',
   'claude-3-opus': 'openai/gpt-oss-120b',
-  'claude-3-sonnet': 'nvidia/nemotron-3.5-super-vl-120b-a12b',
+  'claude-3-sonnet': 'nvidia/nemotron-3-super-120b-a12b',
   'gemini-pro': 'qwen/qwen3-next-80b-a3b-thinking' 
 };
 
@@ -163,6 +163,7 @@ app.post('/v1/chat/completions', async (req, res) => {
                   if (combinedContent) {
                     data.choices[0].delta.content = combinedContent;
                     delete data.choices[0].delta.reasoning_content;
+                    delete data.choices[0].delta.reasoning;
                   }
                 } else {
                   if (content) {
@@ -223,17 +224,35 @@ app.post('/v1/chat/completions', async (req, res) => {
     }
     
   } catch (error) {
-    console.error('Proxy error:', error.message);
-    
+  let detail = error.message;
+  const data = error.response?.data;
+  if (data) {
+    if (typeof data.on === 'function') {
+      // resposta em stream: lê o corpo inteiro
+      detail = await new Promise(resolve => {
+        let body = '';
+        data.on('data', c => body += c.toString());
+        data.on('end', () => resolve(body));
+        data.on('error', () => resolve(error.message));
+      });
+    } else {
+      detail = JSON.stringify(data);
+    }
+  }
+  console.error('Proxy error:', error.response?.status, detail);
+
+  if (!res.headersSent) {
     res.status(error.response?.status || 500).json({
       error: {
-        message: error.message || 'Internal server error',
+        message: detail,
         type: 'invalid_request_error',
         code: error.response?.status || 500
       }
     });
+  } else {
+    res.end();
   }
-});
+  }
 
 // Catch-all for unsupported endpoints
 app.all('*', (req, res) => {
