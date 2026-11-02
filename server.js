@@ -29,6 +29,7 @@ const MODEL_MAPPING = {
   'zai': 'z-ai/glm-5.3',
   'deepseek': 'deepseek-ai/deepseek-v4.1-flash',
   'zai-flash': 'z-ai/glm-5.3-flash' 
+  'mistral': 'mistralai/mistral-large-4-1t-a52b'
 };
 
 // Health check endpoint
